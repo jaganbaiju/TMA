@@ -18,10 +18,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+    path('api-auth/', include('rest_framework.urls')),
+
+
+    # fontend pages
+    path('login-page/', TemplateView.as_view(template_name='login.html'), name='login_page'),
+    path('user-dashboard/', TemplateView.as_view(template_name='user_dashbord.html'), name='user_dashboard'),
+    
 ]
 
 if settings.DEBUG:
