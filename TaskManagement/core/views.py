@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from . serializers import UserSerializer
+from . serializers import UserSerializer, UserResponseSerializer
 from . models import User
 from rest_framework.permissions import IsAuthenticated
 
@@ -36,13 +36,16 @@ class UserRegisterAPIVew(APIView):
 # user dashboard
 class UserProtectedView(APIView):
 
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
+        user = request.user
+
         return Response(
             {
-                "message": "authenticated..",
-                "user": request.data.username
-            }
+                "message": "Login Successfully",
+                "username": user.username,
+            },
+            status=status.HTTP_200_OK
         )

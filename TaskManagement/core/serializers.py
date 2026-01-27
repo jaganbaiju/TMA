@@ -22,3 +22,9 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
         return user
+    
+
+class UserResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'

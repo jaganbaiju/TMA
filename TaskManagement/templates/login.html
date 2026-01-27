@@ -58,8 +58,7 @@
                     localStorage.setItem("access", data.access);
                     localStorage.setItem("refresh", data.refresh);
 
-                    alert("Login Successfully");
-
+                    
                     const loginUrl = "{% url 'user_dashboard' %}";
                     window.location.href = loginUrl;
 
