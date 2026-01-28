@@ -29,7 +29,6 @@
         </div>
     </div>
 
-
     <script>
         const API_URL = "http://127.0.0.1:8000/login/";
 
@@ -48,8 +47,8 @@
 
                 .then(res => res.json())
                 .then(data => {
-                    
-                    if(!data.access) {
+
+                    if (!data.access) {
                         alert(data.detail || "Invalid username or Password");
 
                         return;
@@ -58,13 +57,13 @@
                     localStorage.setItem("access", data.access);
                     localStorage.setItem("refresh", data.refresh);
 
-                    
+
                     const loginUrl = "{% url 'user_dashboard' %}";
                     window.location.href = loginUrl;
 
                 })
                 .catch(err => alert(err));
-                
+
         }
     </script>
 </body>

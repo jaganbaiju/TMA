@@ -6,6 +6,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script src="{% static 'js/create.js' %}"></script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close {
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -13,8 +45,105 @@
         <div class="sub">
             <h1 id="head"></h1>
             <button onclick="logOut()">logout</button>
+            <div class="panel">
+                {% if user.role == "super_admin" or user.role == "admin" %}
+                <h3 class="adminpanel">Admin Panel</h3>
+                {% elif user.role == "user" %}
+                <h3 class="userpanel">User DashBoard</h3>
+                {% endif %}
+            </div>
+            {% if user.role == "super_admin" %}
+            <div>
+                <div>
+                    <a href="#" onclick="openModal()">create user</a>
+                </div><br>
+                <div>
+                    <a href="#" onclick="openModal2()">create admin</a>
+                </div><br>
+                <div>
+                    <a href="{% url 'all_users' %}">all users</a>
+                </div><br>
+                <div>
+                    <a href="{% url 'all_users' %}">all admins</a>
+                </div><br>
+            </div>
+            {% endif %}
+
+            <div>
+                <a href="{% url 'all_tasks' %}">all tasks</a>
+            </div><br>
+
         </div>
     </div>
+
+
+    <!-- modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Create User</h2>
+            <div class="form-div">
+                <div class="form-sub">
+                    <input type="text" id="usr-username" placeholder="username">
+                </div><br>
+                <div class="form-sub">
+                    <input type="text" id="usr-firstname" placeholder="first name">
+                </div><br>
+                <div class="form-sub">
+                    <input type="text" id="usr-lastname" placeholder="last name">
+                </div><br>
+                <div class="form-sub">
+                    <input type="email" id="usr-email" placeholder="email">
+                </div><br>
+                <div class="form-sub" style="display: none;">
+                    <input type="text" id="usr-role" value="user">
+                </div>
+                <div class="form-sub">
+                    <input type="password" id="usr-pass" placeholder="password">
+                </div><br>
+                <div class="form-sub">
+                    <input type="button" onclick="createUser()" value="create">
+                </div><br>
+
+            </div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+
+    <!-- modals -->
+    <div id="modal2" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal2()">&times;</span>
+            <h2>Create Admin</h2>
+            <div class="form-div">
+                <div class="form-sub">
+                    <input type="text" id="ad-username" placeholder="username">
+                </div><br>
+                <div class="form-sub">
+                    <input type="text" id="ad-firstname" placeholder="first name">
+                </div><br>
+                <div class="form-sub">
+                    <input type="text" id="ad-lastname" placeholder="last name">
+                </div><br>
+                <div class="form-sub">
+                    <input type="email" id="ad-email" placeholder="email">
+                </div><br>
+                <div class="form-sub" style="display: none;">
+                    <input type="text" id="ad-role" value="admin">
+                </div>
+                <div class="form-sub">
+                    <input type="password" id="ad-pass" placeholder="password">
+                </div><br>
+                <div class="form-sub">
+                    <input type="button" onclick="createAdmin()" value="create">
+                </div><br>
+
+            </div>
+            <button onclick="closeModal2()">Close</button>
+        </div>
+    </div>
+
 
     <script src="{% static 'js/auth.js' %}"></script>
     <script>
@@ -23,9 +152,10 @@
         const accessToken = localStorage.getItem("access");
         const loginUrl = "{% url 'login_page' %}";
 
-        if (!accessToken) {
-            window.location.href = loginUrl;
-        }
+
+        // if (!accessToken) {
+        //     window.location.href = loginUrl;
+        // }
 
         authFetch(API_URL)
             .then(res => {
@@ -37,8 +167,9 @@
                 return res.json();
             })
             .then(data => {
+
                 document.getElementById('head').innerHTML =
-                    "WELCOME BACK " + data.username;
+                    "WELCOME BACK " + data.data.username.toUpperCase();
             })
             .catch(err => {
                 alert("your not logined");
@@ -53,6 +184,24 @@
 
             window.location.href = loginUrl;
         }
+
+
+        function openModal() {
+            document.getElementById("modal").style.display = "block";
+        }
+
+        function openModal2() {
+            document.getElementById("modal2").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = "none";
+        }
+
+        function closeModal2() {
+            document.getElementById('modal2').style.display = "none";
+        }
+
 
     </script>
 </body>

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from . models import User
+from . models import User, TaskModel
 
 
 # serializer for user
@@ -28,3 +28,27 @@ class UserResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+
+class UserUpdateSeriallizer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskModel
+        fields = ['id', 'title', 'description', 'assigned_to', 'due_date', 'status']
+
+
+class TaskCompleteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskModel
+        fields = ['status', 'completion_report', 'worked_hours']
+
+
+class TaskReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskModel
+        fields = ['id', 'title', 'status', 'completion_report', 'worked_hours']
