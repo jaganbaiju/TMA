@@ -8,6 +8,113 @@
     <title>Document</title>
     <script src="{% static 'js/create.js' %}"></script>
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f2f4f7;
+            font-family: Arial, sans-serif;
+        }
+
+        .main {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .sub {
+            background: #fff;
+            padding: 25px;
+            width: 420px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        h3 {
+            margin: 10px 0;
+            color: #444;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 5px;
+            background: #e74c3c;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #c0392b;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            font-size: 14px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .panel {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f7f7f7;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .user-div,
+        .task-div,
+        .users-div {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 6px;
+        }
+
+        .form-sub input,
+        .form-sub textarea,
+        .form-sub select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: none;
+            height: 70px;
+        }
+
+        .form-sub input[type="button"] {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-sub input[type="button"]:hover {
+            background: #2c80b4;
+        }
+
+        .close {
+            color: #888;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -27,6 +134,7 @@
             border-radius: 8px;
             position: relative;
             text-align: center;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
         }
 
         .close {
@@ -46,14 +154,12 @@
             <h1 id="head"></h1>
             <button onclick="logOut()">logout</button>
             <div class="panel">
-                {% if user.role == "super_admin" or user.role == "admin" %}
-                <h3 class="adminpanel">Admin Panel</h3>
-                {% elif user.role == "user" %}
-                <h3 class="userpanel">User DashBoard</h3>
-                {% endif %}
+                <h3 class="adminpanel" style="display: none;">Admin Panel</h3>
+
+                <h3 class="userpanel" style="display: none;">User DashBoard</h3>
             </div>
-            {% if user.role == "super_admin" %}
-            <div>
+
+            <div class="user-div" style="display: none;">
                 <div>
                     <a href="#" onclick="openModal()">create user</a>
                 </div><br>
@@ -67,11 +173,20 @@
                     <a href="{% url 'all_users' %}">all admins</a>
                 </div><br>
             </div>
-            {% endif %}
 
-            <div>
-                <a href="{% url 'all_tasks' %}">all tasks</a>
-            </div><br>
+            <div class="task-div" style="display: none;">
+                <div>
+                    <a href="{% url 'all_tasks' %}">all tasks</a>
+                </div><br>
+
+                <div>
+                    <a href="#" onclick="openModal3()">asign task tasks</a>
+                </div><br>
+            </div>
+            <br>
+            <div class="users-div" style="display: none;">
+                <a href="{% url 'user_tasks' %}">all tasks</a>
+            </div>
 
         </div>
     </div>
@@ -145,12 +260,45 @@
     </div>
 
 
+    <div id="modal3" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal3()">&times;</span>
+            <h2>Assign Task</h2>
+            <div class="form-div">
+                <div class="form-sub">
+                    <input type="text" id="task-title" placeholder="task title">
+                </div><br>
+                <div class="form-sub">
+                    <textarea id="task-description" placeholder="task description"></textarea>
+                </div><br>
+                <div class="form-sub">
+                    <select id="task-assign-to">
+                        <option value="">------</option>
+                        {% for usr in users %}
+                        <option value="{{usr.id}}">{{usr.username}}</option>
+                        {% endfor %}
+                    </select>
+                </div><br>
+                <div class="form-sub">
+                    <input type="date" id="task-due-date" placeholder="due date">
+                </div><br>
+                <div class="form-sub">
+                    <input type="button" onclick="assignTask()" value="Assign Task">
+                </div><br>
+
+            </div>
+            <button onclick="closeModal3()">Close</button>
+        </div>
+    </div>
+
+
     <script src="{% static 'js/auth.js' %}"></script>
     <script>
 
         const API_URL = "http://127.0.0.1:8000/user-dash/";
         const accessToken = localStorage.getItem("access");
         const loginUrl = "{% url 'login_page' %}";
+        const assignTaskUrl = "http://127.0.0.1:8000/tasks/"
 
 
         // if (!accessToken) {
@@ -167,9 +315,24 @@
                 return res.json();
             })
             .then(data => {
+                localStorage.setItem("userId", data.data.id);
 
                 document.getElementById('head').innerHTML =
                     "WELCOME BACK " + data.data.username.toUpperCase();
+
+                if (data.data.role == "super_admin" || data.data.role == "admin") {
+                    document.getElementsByClassName('adminpanel')[0].style.display = "block";
+                    document.getElementsByClassName('task-div')[0].style.display = "block";
+                }
+
+                if (data.data.role == "super_admin") {
+                    document.getElementsByClassName('user-div')[0].style.display = "block";
+                }
+
+                if (data.data.role == "user") {
+                    document.getElementsByClassName('users-div')[0].style.display = "block";
+                }
+
             })
             .catch(err => {
                 alert("your not logined");
@@ -181,6 +344,7 @@
         function logOut() {
             localStorage.removeItem("access");
             localStorage.removeItem("refresh");
+            localStorage.removeItem("userId");
 
             window.location.href = loginUrl;
         }
@@ -194,12 +358,42 @@
             document.getElementById("modal2").style.display = "block";
         }
 
+        function openModal3() {
+            document.getElementById("modal3").style.display = "block";
+        }
+
         function closeModal() {
             document.getElementById('modal').style.display = "none";
         }
 
         function closeModal2() {
             document.getElementById('modal2').style.display = "none";
+        }
+
+        function closeModal3() {
+            document.getElementById('modal3').style.display = "none";
+        }
+
+        function assignTask() {
+            fetch(assignTaskUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: document.getElementById('task-title').value,
+                    description: document.getElementById('task-description').value,
+                    assigned_to: document.getElementById('task-assign-to').value,
+                    due_date: document.getElementById('task-due-date').value
+                })
+
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    document.getElementById('modal3').style.display = "none";
+                })
+                .catch(err => alert(err));
         }
 
 

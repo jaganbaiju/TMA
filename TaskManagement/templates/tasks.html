@@ -1,15 +1,374 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+
+        .sub {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        .card h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .card p {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .update-btn {
+            background: #3498db;
+            color: #fff;
+        }
+
+        .update-btn:hover {
+            background: #2c80b4;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .promote-btn {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        .promote-btn:hover {
+            background: #27ae60;
+        }
+
+        .form-sub input,
+        .form-sub textarea,
+        .form-sub select {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-sub textarea {
+            resize: none;
+            height: 70px;
+        }
+
+        /* Modal headings */
+        .modal-content h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal-content h3,
+        .modal-content h5 {
+            margin-bottom: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close {
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="main">
+    <div class="main m-5">
         <div class="sub">
             <h3>All Tasks</h3>
+            <div class="row" id="userRow">
+
+            </div>
         </div>
     </div>
+
+
+    <!-- modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Update Task</h2>
+            <div class="form-div">
+                <div class="form-sub" style="display: none;">
+                    <input type="number" id="tsk-id">
+                </div><br>
+                <div class="form-sub">
+                    <input type="text" id="tsk-title" placeholder="title">
+                </div><br>
+                <div class="form-sub">
+                    <textarea id="tsk-description" placeholder="Description"></textarea>
+                </div><br>
+                <div class="form-sub">
+                    <select id="tsk-assigned_to">
+                        {% for usr in users %}
+                        <option value="{{usr.id}}">{{usr.username}}</option>
+                        {% endfor %}
+                    </select>
+                </div><br>
+                <div class="form-sub">
+                    <input type="date" id="tsk-due_date" placeholder="due date">
+                </div><br>
+                <div class="form-sub">
+                    <input type="button" onclick="updateTask()" value="Update">
+                </div><br>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="modal2" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal2()">&times;</span>
+            <h2>Do you want to delete ?</h2>
+            <div class="form-div">
+                <div class="form-sub">
+                    <input type="number" id="id" style="display: none;">
+                    <input type="button" onclick="closeModal2()" value="No">
+                    <input type="button" onclick="deleteTask()" value="Yes">
+                </div><br>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="modal3" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal3()">&times;</span>
+            <h2>Task Completion report</h2>
+            <div class="form-div">
+                <h3 id="task-report-title"></h3>
+                <h5 id="task-report-status"></h5>
+                <p id="task-worked-hour"></p>
+                <p id="task-report"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const taskUrl = "http://127.0.0.1:8000/tasks/";
+        const row = document.getElementById("userRow");
+
+        fetch(taskUrl, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(task => {
+                    const card = document.createElement("div");
+                    card.classList.add("col-md-3", "card", "m-2", "p-3");
+
+                    const reportBtn =
+                        task.status === "completed"
+                            ? `<button class="btn promote-btn" onclick="taskReport(${task.id})">
+                                        Report
+                                </button>`
+                            : "";
+
+                    card.innerHTML = `
+                    <h4>${task.title}</h4>
+                    <p><strong>Description:</strong> ${task.description}</p>
+                    <p><strong>Assinged to:</strong> ${task.assigned_to}</p>
+                    <p><strong>Status:</strong> ${task.status}</p>
+                    <p><strong>Last Date:</strong> ${task.due_date}</p>
+
+                    <div class="btn-group">
+                        <button class="btn update-btn" onclick="openModal(${task.id})">
+                            Update
+                        </button>
+
+                        <button class="btn delete-btn" onclick="openModal2(${task.id})">
+                            Delete
+                        </button>
+                        
+                        ${reportBtn}
+                    </div >
+                `;
+
+                    row.appendChild(card);
+                });
+            })
+            .catch(err => alert(err))
+
+
+        function openModal(taskId) {
+            document.getElementById("modal").style.display = "block";
+
+            fetch(taskUrl + `${taskId}/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data)
+                    document.getElementById('tsk-id').value = data.id;
+                    document.getElementById('tsk-title').value = data.title;
+                    document.getElementById('tsk-description').value = data.description;
+                    document.getElementById('tsk-assigned_to').value = data.assigned_to;
+                    document.getElementById('tsk-due_date').value = data.due_date;
+                })
+                .catch(err => alert(err));
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = "none";
+
+
+        }
+
+        function updateTask() {
+            const taskId = document.getElementById('tsk-id').value;
+            const title = document.getElementById('tsk-title').value;
+            const description = document.getElementById('tsk-description').value;
+            const assigned_to = document.getElementById('tsk-assigned_to').value;
+            const due_date = document.getElementById('tsk-due_date').value;
+
+            fetch(taskUrl + `${taskId}/`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: title,
+                    description: description,
+                    assigned_to: assigned_to,
+                    due_date: due_date
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    document.getElementById('modal').style.display = "none";
+                    location.reload();
+                })
+                .catch(err => alert(err));
+        }
+
+        function openModal2(taskId) {
+            document.getElementById("modal2").style.display = "block";
+            document.getElementById('id').value = taskId
+        }
+
+        function closeModal2() {
+            document.getElementById('modal2').style.display = "none";
+
+        }
+
+        function deleteTask() {
+            const taskId = document.getElementById('id').value;
+
+            fetch(taskUrl + `${taskId}/`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    document.getElementById('modal2').style.display = "none";
+                    location.reload();
+                })
+                .catch(err => alert(err));
+        }
+
+        function taskReport(taskId) {
+            fetch(taskUrl + `${taskId}/report/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    document.getElementById("modal3").style.display = "block";
+                    document.getElementById('task-report-title').innerHTML = "Title :- " + data.title;
+                    document.getElementById('task-report-status').innerHTML = "Status :- " + data.status;
+                    document.getElementById('task-worked-hour').innerHTML = "Worked Hours :- " + data.worked_hours + "hr";
+                    document.getElementById('task-report').innerHTML = "Report :- " + data.completion_report;
+
+                })
+                .catch(err => alert(err));
+        }
+
+        function closeModal3() {
+            document.getElementById('modal3').style.display = "none";
+
+        }
+
+
+    </script>
 </body>
+
 </html>

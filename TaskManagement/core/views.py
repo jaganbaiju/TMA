@@ -118,10 +118,6 @@ class UserUpdateDelView(APIView):
 class TaskAPIView(APIView):
 
     def get(self, request):
-        user = request.user
-        # if user.role == "user":
-        #     all_tasks = TaskModel.objects.all().filter(assigned_to=user.dict())
-        # else:
         all_tasks = TaskModel.objects.all()
         serializer = TaskSerializer(all_tasks, many=True)
 
@@ -163,18 +159,22 @@ class TaskDetailView(APIView):
 
     def put(self, request, pk):
         task = self.get_object(pk)
-        serializer = TaskCompleteSerializer(task, data=request.data)
+        serializer = TaskSerializer(task, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
 
-            return Response(serializer.data)
+            return Response({
+                "message": "updated successfully"
+            })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):
         task = self.get_object(pk)
         task.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({
+            "message": "deleted successfully"
+        })
 
 
 
@@ -187,3 +187,48 @@ class TaskReportView(APIView):
         serializer = TaskReportSerializer(task)
         return Response(serializer.data)
         
+
+class UserTaskView(APIView):
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise Http404
+        
+    def get(self, request, pk):
+        user = self.get_object(pk)
+
+        tasks = user.tasks.all()
+        serializer = TaskSerializer(tasks, many=True)
+
+        return Response(serializer.data,
+                        status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk):
+        user = self.get_object(pk)
+        task_id = request.data['taskId']
+        task_status = request.data['status']
+
+        task = user.tasks.get(id=task_id)
+
+        task.status = task_status
+        task.save()
+
+        return Response({
+            "message": f"task in process"
+        })
+
+
+    def put(self, request, pk):
+        # user = self.get_object(pk)
+        # task_id = request.data['taskId']
+        task = TaskModel.objects.get(pk=pk)
+
+        serializer = TaskCompleteSerializer(task, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({
+                "message": "task completed"
+            })

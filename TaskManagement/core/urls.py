@@ -15,5 +15,6 @@ urlpatterns = [
     
     path('tasks/', views.TaskAPIView.as_view()),
     path('tasks/<int:pk>/', views.TaskDetailView.as_view()),
-    path('tasks/<int:pk>/report/', views.TaskReportView.as_view())
+    path('tasks/<int:pk>/report/', views.TaskReportView.as_view()),
+    path('usr-all-task/<int:pk>/', views.UserTaskView.as_view())
 ]

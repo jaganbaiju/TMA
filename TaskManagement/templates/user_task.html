@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: #f5f6fa;
+            font-family: Arial, sans-serif;
+        }
+
+        h3 {
+            margin-bottom: 20px;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .promote-btn {
+            background-color: #0d6efd;
+            color: #fff;
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        .promote-btn:hover {
+            background-color: #0b5ed7;
+            color: #fff;
+        }
+
+        /* Modal improvements */
+        .modal-content {}
+
+        .modal-content h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .modal-content input,
+        .modal-content textarea {
+            width: 100%;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .modal-content textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        .modal-content input[type="button"] {
+            background-color: #198754;
+            color: white;
+            border: none;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .modal-content input[type="button"]:hover {
+            background-color: #157347;
+        }
+
+        .close {
+            font-weight: bold;
+        }
+
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            width: 350px;
+            padding: 24px;
+            border-radius: 8px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close {
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main m-3">
+        <div class="sub">
+            <h3>All Tasks</h3>
+            <div class="row" id="userRow">
+
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Do you want to delete ?</h2>
+            <div class="form-div">
+                <div class="form-sub">
+                    <div>
+                        <input type="number" id="id" style="display: none;">
+                    </div>
+                    <div>
+                        <input type="number" id="worked_hours" placeholder="worked hours">
+                    </div><br>
+                    <div>
+                        <textarea id="completion_report" placeholder="completion report"></textarea>
+                    </div>
+                    <div>
+                        <input type="button" onclick="completeTask()" value="Done">
+                    </div><br>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div id="modal3" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal3()">&times;</span>
+            <h2>Task Completion report</h2>
+            <div class="form-div">
+                <h3 id="task-report-title"></h3>
+                <h5 id="task-report-status"></h5>
+                <p id="task-worked-hour"></p>
+                <p id="task-report"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const taskUrl = "http://127.0.0.1:8000/usr-all-task/";
+        const row = document.getElementById("userRow");
+        const userId = localStorage.getItem("userId");
+        const reportUrl = "http://127.0.0.1:8000/tasks/";;
+
+        fetch(taskUrl + `${userId}/`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(task => {
+                    const card = document.createElement("div");
+                    card.classList.add("col-md-3", "card", "m-2", "p-3");
+
+                    const startBtn =
+                        task.status === "pending"
+                            ? `<button class="btn promote-btn" onclick="startTask(${task.id})">
+                                        Start
+                                </button>`
+                            : "";
+                    const completeBtn =
+                        task.status === "in_process"
+                            ? `<button class="btn promote-btn" onclick="openModal(${task.id})">
+                                        Complete
+                                </button>`
+                            : "";
+                    const reportBtn =
+                        task.status === "completed"
+                            ? `<button class="btn promote-btn" onclick="taskReport(${task.id})">
+                                        view Report
+                                </button>`
+                            : "";
+
+                    card.innerHTML = `
+                    <h4>${task.title}</h4>
+                    <p><strong>Description:</strong> ${task.description}</p>
+                    <p><strong>Assinged to:</strong> ${task.assigned_to}</p>
+                    <p><strong>Status:</strong> ${task.status}</p>
+                    <p><strong>Last Date:</strong> ${task.due_date}</p>
+
+                    <div class="btn-group">
+                        
+                        
+                        ${startBtn}
+                        ${completeBtn}
+                        ${reportBtn}
+
+                    </div >
+                `;
+
+                    row.appendChild(card);
+                });
+            })
+            .catch(err => alert(err));
+
+
+
+
+        function startTask(taskId) {
+            fetch(taskUrl + `${userId}/`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    taskId: taskId,
+                    status: "in_process"
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload()
+                })
+                .catch(err => alert(err))
+        }
+
+        function openModal(taskId) {
+            document.getElementById("modal").style.display = "block";
+            document.getElementById('id').value = taskId;
+
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = "none";
+        }
+
+
+        function completeTask() {
+            const taskId = document.getElementById('id').value;
+            fetch(taskUrl + `${taskId}/`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    completion_report: document.getElementById('completion_report').value,
+                    worked_hours: document.getElementById('worked_hours').value,
+                    status: "completed"
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload()
+                })
+                .catch(err => alert(err))
+        }
+
+        function taskReport(taskId) {
+            fetch(reportUrl + `${taskId}/report/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    document.getElementById("modal3").style.display = "block";
+                    document.getElementById('task-report-title').innerHTML = "Title :- " + data.title;
+                    document.getElementById('task-report-status').innerHTML = "Status :- " + data.status;
+                    document.getElementById('task-worked-hour').innerHTML = "Worked Hours :- " + data.worked_hours + "hr";
+                    document.getElementById('task-report').innerHTML = "Report :- " + data.completion_report;
+
+                })
+                .catch(err => alert(err));
+        }
+
+        function closeModal3() {
+            document.getElementById('modal3').style.display = "none";
+
+        }
+    </script>
+</body>
+
+</html>

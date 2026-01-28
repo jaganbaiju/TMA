@@ -11,6 +11,117 @@
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
     <style>
+        body {
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+
+        .sub {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        #main-head {
+            display: inline-block;
+            margin-right: 15px;
+            color: #333;
+        }
+
+        #button-id {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            background: #3498db;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        #button-id:hover {
+            background: #2c80b4;
+        }
+
+        .card {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        .card h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .card p {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .update-btn {
+            background: #3498db;
+            color: #fff;
+        }
+
+        .update-btn:hover {
+            background: #2c80b4;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .promote-btn {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        .promote-btn:hover {
+            background: #27ae60;
+        }
+
+        .form-sub input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .modal-content h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .close {
+            color: #777;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -59,7 +170,7 @@
             <h2>Update Data</h2>
             <div class="form-div">
                 <div class="form-sub" style="display: none;">
-                    <input type="number" id="usr-id" >
+                    <input type="number" id="usr-id">
                 </div><br>
                 <div class="form-sub">
                     <input type="text" id="usr-username" placeholder="username">
@@ -76,7 +187,7 @@
                 <div class="form-sub">
                     <input type="button" onclick="updateUser()" value="Update">
                 </div><br>
-                
+
             </div>
         </div>
     </div>
@@ -91,7 +202,7 @@
                     <input type="button" onclick="closeModal2()" value="No">
                     <input type="button" onclick="deleteUser()" value="Yes">
                 </div><br>
-                
+
             </div>
         </div>
     </div>
@@ -145,7 +256,7 @@
         function openModal(userId) {
             document.getElementById("modal").style.display = "block";
 
-            fetch(modifyUrl+`${userId}/`, {
+            fetch(modifyUrl + `${userId}/`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -165,7 +276,7 @@
         function closeModal() {
             document.getElementById('modal').style.display = "none";
 
-            
+
         }
 
         function updateUser() {
@@ -174,8 +285,8 @@
             const first_name = document.getElementById('usr-firstname').value;
             const last_name = document.getElementById('usr-lastname').value;
             const email = document.getElementById('usr-email').value;
-            
-            fetch(modifyUrl+`${userId}/`, {
+
+            fetch(modifyUrl + `${userId}/`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -197,19 +308,19 @@
         }
 
         function openModal2(userId) {
-            document.getElementById("modal2").style.display = "block";  
+            document.getElementById("modal2").style.display = "block";
             document.getElementById('id').value = userId
         }
 
         function closeModal2() {
             document.getElementById('modal2').style.display = "none";
-    
+
         }
 
         function deleteUser() {
             const userId = document.getElementById('id').value;
 
-            fetch(modifyUrl+`${userId}/`, {
+            fetch(modifyUrl + `${userId}/`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json"
@@ -225,7 +336,7 @@
         }
 
         function promoteUser(userId) {
-            fetch(modifyUrl+`${userId}/`, {
+            fetch(modifyUrl + `${userId}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json"
@@ -246,22 +357,22 @@
 
         function getAdminData() {
             fetch(userUrl, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            },
-        })
-            .then(res => res.json())
-            .then(data => {
-                row.innerHTML = "";
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+            })
+                .then(res => res.json())
+                .then(data => {
+                    row.innerHTML = "";
 
-                data.admins.forEach(user => {
-                    const card = document.createElement("div");
-                    card.classList.add("col-md-3");
-                    card.classList.add("card");
-                    card.classList.add("m-3");
+                    data.admins.forEach(user => {
+                        const card = document.createElement("div");
+                        card.classList.add("col-md-3");
+                        card.classList.add("card");
+                        card.classList.add("m-3");
 
-                    card.innerHTML = `
+                        card.innerHTML = `
                     <h4>${user.username}</h4>
                     <p><strong>Email:</strong> ${user.email}</p>
                     <p><strong>Role:</strong> ${user.role}</p>
@@ -281,15 +392,15 @@
                     </div>
                 `;
 
-                    row.appendChild(card);
-                });
+                        row.appendChild(card);
+                    });
 
-                document.getElementById('main-head').innerHTML = "All Admins";
-                const btn = document.getElementById('button-id');
-                btn.innerHTML = "Get User Data";
-                
-            })
-            .catch(err => alert(err))
+                    document.getElementById('main-head').innerHTML = "All Admins";
+                    const btn = document.getElementById('button-id');
+                    btn.innerHTML = "Get User Data";
+
+                })
+                .catch(err => alert(err))
         }
 
         function getUserData() {
@@ -297,19 +408,19 @@
         }
 
         function handleClick() {
-        const btn = document.getElementById("button-id");
+            const btn = document.getElementById("button-id");
 
-        // call admin data first
-        getAdminData();
+            // call admin data first
+            getAdminData();
 
-        // change button behavior for next clicks
-        btn.onclick = function () {
-            getUserData();
-        };
-    }
+            // change button behavior for next clicks
+            btn.onclick = function () {
+                getUserData();
+            };
+        }
 
-    function depromoteUser(userId) {
-        fetch(modifyUrl+`${userId}/`, {
+        function depromoteUser(userId) {
+            fetch(modifyUrl + `${userId}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json"
@@ -325,7 +436,7 @@
                     location.reload();
                 })
                 .catch(err => alert(err));
-    }
+        }
 
     </script>
 </body>
