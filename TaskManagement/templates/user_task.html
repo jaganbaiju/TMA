@@ -182,7 +182,8 @@
         const taskUrl = "http://127.0.0.1:8000/usr-all-task/";
         const row = document.getElementById("userRow");
         const userId = localStorage.getItem("userId");
-        const reportUrl = "http://127.0.0.1:8000/tasks/";;
+        const reportUrl = "http://127.0.0.1:8000/tasks/";
+        const cmptURL = "http://127.0.0.1:8000/task-complete/";
 
         fetch(taskUrl + `${userId}/`, {
             method: "GET",
@@ -272,15 +273,21 @@
 
         function completeTask() {
             const taskId = document.getElementById('id').value;
-            fetch(taskUrl + `${taskId}/`, {
-                method: "PUT",
+            const report = document.getElementById('completion_report').value;
+            const hour = document.getElementById('worked_hours').value;
+
+            console.log(taskId, report, hour);
+
+            fetch(cmptURL + `${taskId}/`, {
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    completion_report: document.getElementById('completion_report').value,
-                    worked_hours: document.getElementById('worked_hours').value,
-                    status: "completed"
+                    taskId: taskId,
+                    status: "completed",
+                    worked_hours: hour,
+                    completion_report: report
                 })
             })
                 .then(res => res.json())
@@ -288,7 +295,8 @@
                     alert(data.message);
                     location.reload()
                 })
-                .catch(err => alert(err))
+                .catch(err => console.log(err));
+
         }
 
         function taskReport(taskId) {
@@ -300,7 +308,7 @@
             })
                 .then(res => res.json())
                 .then(data => {
-                    console.log(data);
+
                     document.getElementById("modal3").style.display = "block";
                     document.getElementById('task-report-title').innerHTML = "Title :- " + data.title;
                     document.getElementById('task-report-status').innerHTML = "Status :- " + data.status;

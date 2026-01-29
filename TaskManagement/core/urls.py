@@ -20,4 +20,5 @@ urlpatterns = [
     path('tasks/<int:pk>/', views.task_detail),
     path('tasks/<int:pk>/report/', views.task_report),
     path('usr-all-task/<int:pk>/', views.user_task_view),
+    path('task-complete/<int:pk>/', views.complete_task)
 ]

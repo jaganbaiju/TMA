@@ -62,4 +62,4 @@ class TaskModel(models.Model):
 
 
     def __str__(self):
-        return f'{self.title - self.assigned_to.username}'
+        return f'{self.title}'

@@ -272,22 +272,20 @@ def user_task_view(request, pk):
             status=status.HTTP_200_OK
         )
 
-    if request.method == 'PUT':
-        try:
-            task = TaskModel.objects.get(pk=pk)
-        except TaskModel.DoesNotExist:
-            return Response(
-                {"error": "Task not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
 
-        serializer = TaskCompleteSerializer(task, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "task completed"},
-                status=status.HTTP_200_OK
-            )
+@api_view(['PATCH'])
+def complete_task(request, pk):
+    task = TaskModel.objects.get(pk=pk)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    task.status = request.data.get('status')
+    task.worked_hours = request.data.get('worked_hours')
+    task.completion_report = request.data.get('completion_report')
+
+    task.save()
+
+    return Response({
+        "message": "Task Completed"
+    })
+
+
     
