@@ -1,5 +1,5 @@
 function createUser(){
-    const URL = "http://127.0.0.1:8000/user-api/";
+    const URL = "http://127.0.0.1:8000/user-register/";
     const dashboardUrl = "{% url 'user_dashboard' %}"
 
     fetch(URL, {
@@ -29,7 +29,7 @@ function createUser(){
 
 
 function createAdmin(){
-    const URL = "http://127.0.0.1:8000/user-api/";
+    const URL = "http://127.0.0.1:8000/user-register/";
     const dashboardUrl = "{% url 'user_dashboard' %}"
 
     fetch(URL, {

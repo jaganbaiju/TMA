@@ -6,229 +6,288 @@ from rest_framework import status
 from . serializers import UserSerializer, UserResponseSerializer, TaskSerializer, TaskCompleteSerializer, TaskReportSerializer, UserUpdateSeriallizer
 from . models import User, TaskModel
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from django.contrib import auth
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
+# user register
+@api_view(['POST'])
+def user_register(request):
+    username = request.data.get('username')
+    first_name = request.data.get('first_name')
+    last_name = request.data.get('last_name')
+    email = request.data.get('email')
+    role = request.data.get('role')
+    password = request.data.get('password')
 
-# user register view
-class UserAPIVew(APIView):
 
-    permission_classes = []
-
-    def post(self, request):
-
-        serializer = UserSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(
-                {
-                    "message": "User created successfully..!!"
-                },
-                status=status.HTTP_201_CREATED
-            )
-        
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+    if User.objects.filter(username=username).exists():
+        return Response({
+            "error": "username already exist"
+        }, status=status.HTTP_409_CONFLICT)
+    elif User.objects.filter(email=email).exists():
+        return Response({
+            "error": "email already exist"
+        }, status=status.HTTP_409_CONFLICT)
+    else:
+        user = User.objects.create_user(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            role=role,
+            password=password
         )
-    
-    def get(self, request):
-        all_users = User.objects.all().filter(role="user")
-        serializer_users = UserResponseSerializer(all_users, many=True)
-
-        all_admins = User.objects.all().filter(role="admin")
-        serializer_admins = UserResponseSerializer(all_admins, many=True)
 
         return Response({
-            "users": serializer_users.data,
-            "admins": serializer_admins.data
-        },
-        status=status.HTTP_200_OK)
-
-
-        
-
-# user dashboard
-class UserProtectedView(APIView):
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-
-        user = request.user
-        serializer = UserResponseSerializer(user)
-
-        return Response(
-            {
-                "message": "Login Successfully",
-                "data": serializer.data,
-            },
-            status=status.HTTP_200_OK
-        )
+            "message": "user created successfully"
+        }, status=status.HTTP_201_CREATED)
     
 
-class UserUpdateDelView(APIView):
+# all users
+@api_view(['GET'])
+def get_all_users(request):
+    users = User.objects.all().filter(role="user")
+    admins = User.objects.all().filter(role="admin")
+    
+    serializer_users = UserResponseSerializer(users, many=True)
+    serializer_admins = UserResponseSerializer(admins, many=True)
 
-    def get_object(self, pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            raise Http404
+    return Response({
+        "users": serializer_users.data,
+        "admins": serializer_admins.data
+    },
+    status=status.HTTP_200_OK)
 
-    def get(self, request, pk):
-        user = self.get_object(pk)
-        serializer = UserSerializer(user)
 
-        return Response(serializer.data)
+# login
+@api_view(['POST'])
+def user_login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
 
-    def put(self, request, pk):
-        user = self.get_object(pk)
-        serializer = UserUpdateSeriallizer(user, data=request.data)
+    user = auth.authenticate(
+        username=username,
+        password=password
+    )
+
+    if user is None:
+        return Response({
+            "error": "Invalid Credentials"
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+    refresh = RefreshToken.for_user(user)
+    access = refresh.access_token
+
+    return Response({
+        "message": "Login Success",
+        "access": str(access),
+        "refresh": str(refresh)
+    }, status=status.HTTP_200_OK)
+
+
+# User Protected view
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_dashboard(request):
+
+    user = request.user
+    serializer = UserResponseSerializer(user)
+
+    return Response(
+        {
+            "data": serializer.data,
+        },
+        status=status.HTTP_200_OK
+    )
         
+# user update delete
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+def user_update_delete(request, pk):
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response({
+            "error": "user not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        serializer = UserResponseSerializer(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    
+    if request.method == 'PUT':
+        serializer = UserUpdateSeriallizer(user, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
 
             return Response({
-                "message": "data updated"
-            })
+                "message": "user data updated"
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def patch(self, request, pk):
-        user = self.get_object(pk)
-        role = request.data['role']
+    if request.method == 'PATCH':
+        role = request.data.get('role')
+
+        if not role:
+            return Response({
+            "error": "role required"
+        }, status=status.HTTP_400_BAD_REQUEST)
 
         user.role = role
         user.save()
 
         return Response({
             "message": "role changed"
-        })
-    
-    def delete(self, request, pk):
-        user = self.get_object(pk)
+        }, status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
         user.delete()
+
         return Response({
-            "message": "deleted successfully"
-        })
+            "message": "user deleted"
+        }, status=status.HTTP_200_OK)
+
+    
     
 
 # create task
-class TaskAPIView(APIView):
+@api_view(['POST'])
+def assign_task(request):
+    serializer = TaskSerializer(data=request.data)
 
-    def get(self, request):
-        all_tasks = TaskModel.objects.all()
-        serializer = TaskSerializer(all_tasks, many=True)
+    if serializer.is_valid():
+        serializer.save()
 
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = TaskSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(
-                {
-                    "message": "Task created successfully..!!"
-                },
-                status=status.HTTP_201_CREATED
-            )
-        
         return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+            {
+                "message": "Task created successfully..!!"
+            },
+            status=status.HTTP_201_CREATED
         )
     
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
-class TaskDetailView(APIView):
-    def get_object(self, pk):
-        try:
-            return TaskModel.objects.get(pk=pk)
-        except TaskModel.DoesNotExist:
-            raise Http404
-        
-    
-    def get(self, request, pk):
-        task = self.get_object(pk)
+# view all tasks
+@api_view(['GET'])
+def get_tasks(request):
+    all_tasks = TaskModel.objects.all()
+    serializer = TaskSerializer(all_tasks, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def task_detail(request, pk):
+    try:
+        task = TaskModel.objects.get(pk=pk)
+    except TaskModel.DoesNotExist:
+        return Response(
+            {"error": "Task not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
         serializer = TaskSerializer(task)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response(serializer.data)
-    
-
-    def put(self, request, pk):
-        task = self.get_object(pk)
+    if request.method == 'PUT':
         serializer = TaskSerializer(task, data=request.data)
-
         if serializer.is_valid():
             serializer.save()
-
-            return Response({
-                "message": "updated successfully"
-            })
+            return Response(
+                {"message": "updated successfully"},
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def delete(self, request, pk):
-        task = self.get_object(pk)
+
+    if request.method == 'DELETE':
         task.delete()
-        return Response({
-            "message": "deleted successfully"
-        })
+        return Response(
+            {"message": "deleted successfully"},
+            status=status.HTTP_200_OK
+        )
 
 
-
-class TaskReportView(APIView):
-    def get(self, request, pk):
+# task report
+@api_view(['GET'])
+def task_report(request, pk):
+    try:
         task = TaskModel.objects.get(pk=pk, status="completed")
-        if not task:
-            raise Http404
-        
-        serializer = TaskReportSerializer(task)
-        return Response(serializer.data)
-        
+    except TaskModel.DoesNotExist:
+        return Response(
+            {"error": "Completed task not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
-class UserTaskView(APIView):
-    def get_object(self, pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            raise Http404
-        
-    def get(self, request, pk):
-        user = self.get_object(pk)
+    serializer = TaskReportSerializer(task)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+@api_view(['GET', 'PATCH', 'PUT'])
+def user_task_view(request, pk):
+
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
         tasks = user.tasks.all()
         serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response(serializer.data,
-                        status=status.HTTP_200_OK)
-    
-    def patch(self, request, pk):
-        user = self.get_object(pk)
-        task_id = request.data['taskId']
-        task_status = request.data['status']
+    if request.method == 'PATCH':
+        task_id = request.data.get('taskId')
+        task_status = request.data.get('status')
 
-        task = user.tasks.get(id=task_id)
+        if not task_id or not task_status:
+            return Response(
+                {"error": "taskId and status are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            task = user.tasks.get(id=task_id)
+        except TaskModel.DoesNotExist:
+            return Response(
+                {"error": "Task not found for this user"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         task.status = task_status
         task.save()
 
-        return Response({
-            "message": f"task in process"
-        })
+        return Response(
+            {"message": "task status updated"},
+            status=status.HTTP_200_OK
+        )
 
-
-    def put(self, request, pk):
-        # user = self.get_object(pk)
-        # task_id = request.data['taskId']
-        task = TaskModel.objects.get(pk=pk)
+    if request.method == 'PUT':
+        try:
+            task = TaskModel.objects.get(pk=pk)
+        except TaskModel.DoesNotExist:
+            return Response(
+                {"error": "Task not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = TaskCompleteSerializer(task, data=request.data)
-
         if serializer.is_valid():
             serializer.save()
+            return Response(
+                {"message": "task completed"},
+                status=status.HTTP_200_OK
+            )
 
-            return Response({
-                "message": "task completed"
-            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
